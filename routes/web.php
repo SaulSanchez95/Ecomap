@@ -2,6 +2,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Usuarios\RedirigirUsuarioController;
+use App\Http\Middleware\EnsureUserRole;
 
 use App\Http\Controllers\CentroAcopioController;
 use App\Http\Controllers\CampaniaController;
@@ -13,10 +15,12 @@ use App\Http\Controllers\RegistroAcopioDiarioController;
 Route::view('/', 'ecomap.inicio')->name('inicio');
 
 // Portal del ciudadano
-Route::view('/ciudadano', 'ecomap.ciudadano')->name('ciudadano');
+// Módulo de usuarios - Anabel. Fortify gestiona login, registro y logout.
+Route::get('/mi-espacio', RedirigirUsuarioController::class)->middleware('auth')->name('usuarios.inicio');
+Route::view('/ciudadano', 'ecomap.ciudadano')->middleware(['auth', EnsureUserRole::class.':ciudadano'])->name('ciudadano');
 
 // Panel del encargado
-Route::view('/encargado', 'ecomap.encargado')->name('encargado');
+Route::view('/encargado', 'ecomap.encargado')->middleware(['auth', EnsureUserRole::class.':dueno'])->name('encargado');
 
 // Módulos protegidos de EcoMap
 Route::middleware('auth')->group(function () {

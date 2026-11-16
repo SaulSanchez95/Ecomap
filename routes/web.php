@@ -3,6 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Usuarios\RedirigirUsuarioController;
+use App\Http\Controllers\Usuarios\PerfilController;
 use App\Http\Middleware\EnsureUserRole;
 
 use App\Http\Controllers\CentroAcopioController;
@@ -17,6 +18,8 @@ Route::view('/', 'ecomap.inicio')->name('inicio');
 // Portal del ciudadano
 // Módulo de usuarios - Anabel. Fortify gestiona login, registro y logout.
 Route::get('/mi-espacio', RedirigirUsuarioController::class)->middleware('auth')->name('usuarios.inicio');
+Route::get('/perfil', [PerfilController::class, 'edit'])->middleware('auth')->name('perfil');
+Route::patch('/perfil', [PerfilController::class, 'update'])->middleware('auth')->name('perfil.actualizar');
 Route::view('/ciudadano', 'ecomap.ciudadano')->middleware(['auth', EnsureUserRole::class.':ciudadano'])->name('ciudadano');
 
 // Panel del encargado

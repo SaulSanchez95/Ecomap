@@ -18,9 +18,20 @@
             <a href="{{ route('ciudadano') }}">Ciudadanos</a>
             <a href="{{ route('encargado') }}">Centros de acopio</a>
         </nav>
-        <a href="{{ route('ciudadano') }}" class="btn-primary">
-            Explorar centros
-        </a>
+        @auth
+            <div class="usuario-acciones">
+                <a href="{{ route('perfil') }}" class="btn-secondary">Mi perfil</a>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-primary">Cerrar sesión</button>
+                </form>
+            </div>
+        @else
+            <div class="usuario-acciones">
+                <a href="{{ route('login') }}" class="btn-secondary">Iniciar sesión</a>
+                <a href="{{ route('register') }}" class="btn-primary">Crear cuenta</a>
+            </div>
+        @endauth
     </header>
     <main>
         @yield('content')

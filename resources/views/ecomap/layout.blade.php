@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'EcoMap')</title>
     <link rel="stylesheet" href="{{ asset('css/ecomap.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/usuarios.css') }}">
 </head>
 <body>
     <header class="navbar">
@@ -17,9 +18,20 @@
             <a href="{{ route('ciudadano') }}">Ciudadanos</a>
             <a href="{{ route('encargado') }}">Centros de acopio</a>
         </nav>
-        <a href="{{ route('ciudadano') }}" class="btn-primary">
-            Explorar centros
-        </a>
+        @auth
+            <div class="usuario-acciones">
+                <a href="{{ route('perfil') }}" class="btn-secondary">Mi perfil</a>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-primary">Cerrar sesión</button>
+                </form>
+            </div>
+        @else
+            <div class="usuario-acciones">
+                <a href="{{ route('login') }}" class="btn-secondary">Iniciar sesión</a>
+                <a href="{{ route('register') }}" class="btn-primary">Crear cuenta</a>
+            </div>
+        @endauth
     </header>
     <main>
         @yield('content')

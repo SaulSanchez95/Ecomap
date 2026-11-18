@@ -1,0 +1,22 @@
+/* Módulo de usuarios - Anabel. Mantiene las variables visuales de EcoMap. */
+.usuarios-wrap { min-height: 68vh; padding: 64px 18px; display: flex; align-items: flex-start; justify-content: center; }
+.usuarios-card { background: var(--blanco); border: 1px solid var(--borde); border-radius: 16px; box-shadow: 0 15px 40px rgba(20,50,30,.06); padding: 38px; width: 100%; max-width: 480px; }
+.usuarios-card-ancho { max-width: 760px; }
+.usuarios-card h1 { color: var(--verde-oscuro); font-size: clamp(28px,4vw,35px); margin-bottom: 10px; }
+.usuarios-card h2 { color: var(--verde-oscuro); font-size: 21px; margin-bottom: 18px; }
+.usuarios-descripcion { color: var(--gris); line-height: 1.6; margin-bottom: 24px; }
+.usuarios-form { display: flex; flex-direction: column; gap: 18px; }
+.usuarios-form .form-grid { margin-bottom: 4px; }
+.usuarios-form .form-group input, .usuarios-form .form-group select { width: 100%; }
+.usuarios-check { color: var(--gris); font-size: 13px; display: flex; align-items: center; gap: 9px; }
+.usuarios-boton { width: 100%; margin-top: 4px; text-align: center; }
+.usuarios-links { color: var(--gris); font-size: 14px; text-align: center; margin-top: 18px; }
+.usuarios-links a { color: var(--verde); font-weight: bold; }
+.usuarios-campo-error { display: block; color: #a92b2b; line-height: 1.35; }
+.usuarios-error { padding: 12px 14px; border-radius: 8px; background: #fff0ef; color: #9b2424; margin-bottom: 20px; }
+.usuarios-aviso { padding: 12px 14px; border-radius: 8px; background: var(--verde-claro); color: var(--verde-oscuro); margin-bottom: 20px; }
+.usuarios-separador { border: 0; border-top: 1px solid var(--borde); margin: 30px 0; }
+.navbar .usuario-acciones { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.navbar .usuario-acciones form { margin: 0; }
+.navbar .usuario-acciones button { white-space: nowrap; }
+@media (max-width: 600px) { .usuarios-wrap { padding: 30px 14px; } .usuarios-card { padding: 24px 18px; } .navbar .usuario-acciones { width: 100%; } }

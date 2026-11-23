@@ -12,11 +12,21 @@
             <span class="logo-icon">♻</span>
             <span>Eco<span>Map</span></span>
         </a>
-        <nav class="menu">
-            <a href="{{ route('inicio') }}">Inicio</a>
-            <a href="{{ route('ciudadano') }}">Ciudadanos</a>
-            <a href="{{ route('encargado') }}">Centros de acopio</a>
-        </nav>
+        
+<nav class="menu">
+    <a href="{{ route('inicio') }}">Inicio</a>
+    <a href="{{ route('ciudadano') }}">Ciudadanos</a>
+    <a href="{{ route('encargado') }}">Centros de acopio</a>
+
+    @auth
+        @if(auth()->user()->esAdministrador())
+            <a href="{{ route('admin.dashboard') }}">
+                Administración
+            </a>
+        @endif
+    @endauth
+</nav>
+
         <a href="{{ route('ciudadano') }}" class="btn-primary">
             Explorar centros
         </a>

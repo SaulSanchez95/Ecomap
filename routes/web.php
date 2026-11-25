@@ -2,11 +2,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Usuarios\RedirigirUsuarioController;
 use App\Http\Controllers\Usuarios\PerfilController;
 use App\Http\Middleware\EnsureUserRole;
 
 use App\Http\Controllers\CentroAcopioController;
+use App\Http\Controllers\CatalogoCentroAcopioController;
 use App\Http\Controllers\CampaniaController;
 use App\Http\Controllers\SolicitudAcopioController;
 use App\Http\Controllers\SolicitudActualizacionCentroController;
@@ -15,15 +17,44 @@ use App\Http\Controllers\RegistroAcopioDiarioController;
 // Página principal de EcoMap
 Route::view('/', 'ecomap.inicio')->name('inicio');
 
+// Módulo de usuarios - Anabel
+Route::get(
+    '/mi-espacio',
+    RedirigirUsuarioController::class
+)->middleware('auth')->name('usuarios.inicio');
+
+Route::get(
+    '/perfil',
+    [PerfilController::class, 'edit']
+)->middleware('auth')->name('perfil');
+
+Route::patch(
+    '/perfil',
+    [PerfilController::class, 'update']
+)->middleware('auth')->name('perfil.actualizar');
+
 // Portal del ciudadano
-// Módulo de usuarios - Anabel. Fortify gestiona login, registro y logout.
-Route::get('/mi-espacio', RedirigirUsuarioController::class)->middleware('auth')->name('usuarios.inicio');
-Route::get('/perfil', [PerfilController::class, 'edit'])->middleware('auth')->name('perfil');
-Route::patch('/perfil', [PerfilController::class, 'update'])->middleware('auth')->name('perfil.actualizar');
-Route::view('/ciudadano', 'ecomap.ciudadano')->middleware(['auth', EnsureUserRole::class.':ciudadano'])->name('ciudadano');
+Route::middleware([
+    'auth',
+    EnsureUserRole::class . ':ciudadano'
+])->group(function () {
+
+    Route::get(
+        '/ciudadano',
+        [CatalogoCentroAcopioController::class, 'index']
+    )->name('ciudadano');
+
+    Route::get(
+        '/centros-publicos/{id}',
+        [CatalogoCentroAcopioController::class, 'show']
+    )->name('centros.publicos.show');
+
+});
 
 // Panel del encargado
-Route::view('/encargado', 'ecomap.encargado')->middleware(['auth', EnsureUserRole::class.':dueno'])->name('encargado');
+Route::view('/encargado', 'ecomap.encargado')
+    ->middleware(['auth', EnsureUserRole::class . ':dueno'])
+    ->name('encargado');
 
 // Módulos protegidos de EcoMap
 Route::middleware('auth')->group(function () {

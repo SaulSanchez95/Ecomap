@@ -13,6 +13,9 @@ use Illuminate\Support\Carbon;
 
 class CampaniaController extends Controller
 {
+    /**
+     * Verificar que el usuario tenga el rol de dueño.
+     */
     private function verificarDueno(Request $request): void
     {
         abort_unless(
@@ -23,6 +26,9 @@ class CampaniaController extends Controller
         );
     }
 
+    /**
+     * Comprobar que los materiales seleccionados estén activos.
+     */
     private function validarMaterialesActivos(array $materiales): array
     {
         $ids = collect($materiales)
@@ -37,11 +43,11 @@ class CampaniaController extends Controller
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        abort_unless(
-            count($idsActivos) === count($ids),
-            422,
-            'Uno o más materiales ya no están disponibles.'
-        );
+        if (count($idsActivos) !== count($ids)) {
+            throw ValidationException::withMessages([
+                'materiales' => 'Uno o más materiales ya no están disponibles.',
+            ]);
+        }
 
         $resultado = [];
 
@@ -54,6 +60,32 @@ class CampaniaController extends Controller
         return $resultado;
     }
 
+    /**
+     * Comprobar que el centro acepte todos los materiales seleccionados.
+     */
+    private function validarMaterialesAceptados(
+        CentroAcopio $centro,
+        array $materiales
+    ): void {
+        $idsAceptados = $centro->materiales()
+            ->pluck('materiales.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        foreach ($materiales as $material) {
+            $idMaterial = (int) $material['id'];
+
+            if (!in_array($idMaterial, $idsAceptados, true)) {
+                throw ValidationException::withMessages([
+                    'materiales' => 'El centro seleccionado no acepta uno de los materiales indicados.',
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Mostrar las campañas de los centros pertenecientes al dueño.
+     */
     public function index(Request $request)
     {
         $this->verificarDueno($request);
@@ -65,9 +97,15 @@ class CampaniaController extends Controller
             ->latest()
             ->get();
 
-        return view('ecomap.campanias.index', compact('campanias'));
+        return view(
+            'ecomap.campanias.index',
+            compact('campanias')
+        );
     }
 
+    /**
+     * Mostrar el formulario para crear una campaña.
+     */
     public function create(Request $request)
     {
         $this->verificarDueno($request);
@@ -76,6 +114,7 @@ class CampaniaController extends Controller
             ->centros()
             ->where('estado_validacion', 'validado')
             ->where('activo', true)
+            ->with('materiales')
             ->orderBy('nombre')
             ->get();
 
@@ -89,6 +128,9 @@ class CampaniaController extends Controller
         );
     }
 
+    /**
+     * Registrar una campaña.
+     */
     public function store(Request $request)
     {
         $this->verificarDueno($request);
@@ -102,22 +144,49 @@ class CampaniaController extends Controller
                     ->where('estado_validacion', 'validado')
                     ->where('activo', true),
             ],
-            'titulo' => ['required', 'string', 'max:120'],
-            'descripcion' => ['nullable', 'string'],
-            'fecha_inicio' => ['required', 'date', 'after_or_equal:today'],
+
+            'titulo' => [
+                'required',
+                'string',
+                'max:120',
+            ],
+
+            'descripcion' => [
+                'nullable',
+                'string',
+            ],
+
+            'fecha_inicio' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+            ],
+
             'fecha_fin' => [
                 'required',
                 'date',
                 'after_or_equal:fecha_inicio',
             ],
-            'materiales' => ['required', 'array', 'min:1'],
-            'materiales.*' => ['required', 'array'],
+
+            'materiales' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'materiales.*' => [
+                'required',
+                'array',
+            ],
+
             'materiales.*.id' => [
                 'required',
                 'integer',
                 'distinct',
-                Rule::exists('materiales', 'id')->where('activo', true),
+                Rule::exists('materiales', 'id')
+                    ->where('activo', true),
             ],
+
             'materiales.*.cantidad' => [
                 'required',
                 'numeric',
@@ -129,6 +198,7 @@ class CampaniaController extends Controller
 
         DB::transaction(function () use ($datos, $request) {
 
+            // Recuperar y bloquear el centro seleccionado.
             $centro = CentroAcopio::whereKey($datos['fk_id_centro'])
                 ->where('fk_id_usuario', $request->user()->id)
                 ->where('estado_validacion', 'validado')
@@ -136,10 +206,18 @@ class CampaniaController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Validar que el centro acepte los materiales seleccionados.
+            $this->validarMaterialesAceptados(
+                $centro,
+                $datos['materiales']
+            );
+
+            // Validar que todos los materiales sigan activos.
             $materiales = $this->validarMaterialesActivos(
                 $datos['materiales']
             );
 
+            // Crear la campaña inicialmente como borrador.
             $campania = Campania::create([
                 'fk_id_centro' => $centro->id,
                 'titulo' => $datos['titulo'],
@@ -149,14 +227,21 @@ class CampaniaController extends Controller
                 'estado' => 'borrador',
             ]);
 
+            // Asociar los materiales y sus cantidades solicitadas.
             $campania->materiales()->sync($materiales);
         });
 
         return redirect()
             ->route('campanias.index')
-            ->with('success', 'Campaña registrada correctamente.');
+            ->with(
+                'success',
+                'Campaña registrada correctamente.'
+            );
     }
 
+    /**
+     * Mostrar los detalles de una campaña.
+     */
     public function show(Request $request, string $id)
     {
         $this->verificarDueno($request);
@@ -167,9 +252,15 @@ class CampaniaController extends Controller
             ->with(['centro', 'materiales'])
             ->findOrFail($id);
 
-        return view('ecomap.campanias.show', compact('campania'));
+        return view(
+            'ecomap.campanias.show',
+            compact('campania')
+        );
     }
 
+    /**
+     * Mostrar el formulario para editar una campaña.
+     */
     public function edit(Request $request, string $id)
     {
         $this->verificarDueno($request);
@@ -180,12 +271,15 @@ class CampaniaController extends Controller
             ->with(['centro', 'materiales'])
             ->findOrFail($id);
 
+        // Solamente se pueden modificar campañas en borrador.
         abort_unless(
             $campania->estado === 'borrador',
             403,
             'Solo puedes modificar campañas que estén en borrador.'
         );
 
+        // Mostrar materiales activos y los que ya están asociados,
+        // aunque estos últimos se hayan desactivado.
         $materiales = Material::where('activo', true)
             ->orWhereIn(
                 'id',
@@ -200,23 +294,55 @@ class CampaniaController extends Controller
         );
     }
 
+    /**
+     * Actualizar una campaña que esté en borrador.
+     */
     public function update(Request $request, string $id)
     {
         $this->verificarDueno($request);
 
         $datos = $request->validate([
-            'titulo' => ['required', 'string', 'max:120'],
-            'descripcion' => ['nullable', 'string'],
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
-            'materiales' => ['required', 'array', 'min:1'],
-            'materiales.*' => ['required', 'array'],
+            'titulo' => [
+                'required',
+                'string',
+                'max:120',
+            ],
+
+            'descripcion' => [
+                'nullable',
+                'string',
+            ],
+
+            'fecha_inicio' => [
+                'required',
+                'date',
+            ],
+
+            'fecha_fin' => [
+                'required',
+                'date',
+                'after_or_equal:fecha_inicio',
+            ],
+
+            'materiales' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'materiales.*' => [
+                'required',
+                'array',
+            ],
+
             'materiales.*.id' => [
                 'required',
                 'integer',
                 'distinct',
-                Rule::exists('materiales', 'id')->where('activo', true),
+                Rule::exists('materiales', 'id')
+                    ->where('activo', true),
             ],
+
             'materiales.*.cantidad' => [
                 'required',
                 'numeric',
@@ -228,6 +354,7 @@ class CampaniaController extends Controller
 
         $campania = DB::transaction(function () use ($request, $id, $datos) {
 
+            // Recuperar y bloquear una campaña del dueño.
             $campania = Campania::whereHas('centro', function ($query) use ($request) {
                 $query->where('fk_id_usuario', $request->user()->id);
             })
@@ -241,7 +368,18 @@ class CampaniaController extends Controller
                 'Solo puedes modificar campañas que estén en borrador.'
             );
 
-            // Comprobar la fecha de inicio usando la campaña bloqueada.
+            // Comprobar que el centro relacionado exista.
+            $campania->load('centro');
+
+            $centro = $campania->centro;
+
+            abort_unless(
+                $centro,
+                404,
+                'No se encontró el centro de la campaña.'
+            );
+
+            // Comprobar las fechas.
             $fechaInicioNueva = Carbon::parse(
                 $datos['fecha_inicio']
             )->toDateString();
@@ -259,7 +397,13 @@ class CampaniaController extends Controller
                 ]);
             }
 
-            // Validar los materiales activos seleccionados.
+            // Comprobar que el centro acepte los materiales seleccionados.
+            $this->validarMaterialesAceptados(
+                $centro,
+                $datos['materiales']
+            );
+
+            // Comprobar que los materiales seleccionados estén activos.
             $materiales = $this->validarMaterialesActivos(
                 $datos['materiales']
             );
@@ -277,6 +421,7 @@ class CampaniaController extends Controller
                 ];
             }
 
+            // Actualizar los datos de la campaña.
             $campania->update([
                 'titulo' => $datos['titulo'],
                 'descripcion' => $datos['descripcion'] ?? null,
@@ -284,7 +429,7 @@ class CampaniaController extends Controller
                 'fecha_fin' => $datos['fecha_fin'],
             ]);
 
-            // Sincronizar sin perder los materiales inactivos anteriores.
+            // Sincronizar materiales sin perder los inactivos anteriores.
             $campania->materiales()->sync($materiales);
 
             return $campania;
@@ -292,9 +437,15 @@ class CampaniaController extends Controller
 
         return redirect()
             ->route('campanias.show', $campania->id)
-            ->with('success', 'Campaña actualizada correctamente.');
+            ->with(
+                'success',
+                'Campaña actualizada correctamente.'
+            );
     }
 
+    /**
+     * Eliminar una campaña que esté en borrador.
+     */
     public function destroy(Request $request, string $id)
     {
         $this->verificarDueno($request);
@@ -319,6 +470,9 @@ class CampaniaController extends Controller
 
         return redirect()
             ->route('campanias.index')
-            ->with('success', 'Campaña eliminada correctamente.');
+            ->with(
+                'success',
+                'Campaña eliminada correctamente.'
+            );
     }
 }

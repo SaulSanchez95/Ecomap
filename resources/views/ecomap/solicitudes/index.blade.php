@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('ecomap.layout')
 
 @section('content')
 <div class="container">

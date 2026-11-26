@@ -872,4 +872,114 @@ th, td {
         grid-template-columns: 1fr;
     }
 }
+
+/* =====================================
+   CAMPAÑAS: TARJETAS DE MATERIALES
+===================================== */
+
+.campania-materiales-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 15px;
+}
+
+.campania-material-card {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-width: 0;
+    padding: 18px;
+    background: #f8faf8;
+    border: 1px solid var(--borde);
+    border-radius: 11px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.campania-material-card:hover {
+    border-color: var(--verde);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
+}
+
+.campania-material-opcion {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.campania-material-opcion input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--verde);
+    cursor: pointer;
+}
+
+.campania-material-card > label:not(.campania-material-opcion) {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.campania-material-card input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px;
+    background: white;
+    border: 1px solid var(--borde);
+    border-radius: 7px;
+}
+
+.campania-material-card input[type="number"]:focus {
+    outline: none;
+    border-color: var(--verde);
+}
+
+.campania-material-card input[type="number"]:disabled {
+    background: #eeeeee;
+    cursor: not-allowed;
+}
+
+.campania-material-inactivo {
+    display: block;
+    margin-top: 5px;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.campania-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.campania-acciones button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+
+    .campania-materiales-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .campania-acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .campania-acciones > * {
+        text-align: center;
+    }
+
+}
 }

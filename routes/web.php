@@ -120,5 +120,102 @@ Route::middleware('auth')->group(function () {
         'store',
         'show'
     ]);
+    // Proteger todas las operaciones administrativas.
+Route::middleware(
+    EnsureUserRole::class . ':administrador'
+)->group(function () {
 
+    // Panel de administración de EcoMap
+    Route::get(
+        '/admin',
+        [\App\Http\Controllers\Admin\DashboardController::class, 'index']
+    )->name('admin.dashboard');
+
+    // Centros pendientes de validación
+    Route::get(
+        '/admin/centros-pendientes',
+        [\App\Http\Controllers\Admin\CentroValidacionController::class, 'index']
+    )->name('admin.centros.pendientes');
+
+    // Aprobar un centro nuevo
+    Route::post(
+        '/admin/centros/{id}/aprobar',
+        [\App\Http\Controllers\Admin\CentroValidacionController::class, 'aprobar']
+    )->name('admin.centros.aprobar');
+
+    // Rechazar un centro nuevo
+    Route::post(
+        '/admin/centros/{id}/rechazar',
+        [\App\Http\Controllers\Admin\CentroValidacionController::class, 'rechazar']
+    )->name('admin.centros.rechazar');
+
+    // Solicitudes de actualización de centros
+    Route::get(
+        '/admin/solicitudes-actualizacion',
+        [\App\Http\Controllers\Admin\SolicitudesActualizacionAdminController::class, 'index']
+    )->name('admin.actualizaciones.index');
+
+    // Aprobar una solicitud de actualización
+    Route::post(
+        '/admin/solicitudes-actualizacion/{id}/aprobar',
+        [\App\Http\Controllers\Admin\SolicitudesActualizacionAdminController::class, 'aprobar']
+    )->name('admin.actualizaciones.aprobar');
+
+    // Rechazar una solicitud de actualización
+    Route::post(
+        '/admin/solicitudes-actualizacion/{id}/rechazar',
+        [\App\Http\Controllers\Admin\SolicitudesActualizacionAdminController::class, 'rechazar']
+    )->name('admin.actualizaciones.rechazar');
+
+    // Mostrar formulario para crear administradores
+    Route::get(
+        '/admin/administradores/crear',
+        [\App\Http\Controllers\Admin\AdministradorController::class, 'create']
+    )->name('admin.administradores.create');
+
+    // Guardar un nuevo administrador
+
+    // Lista de usuarios registrados
+    Route::get(
+        '/admin/usuarios',
+        [\App\Http\Controllers\Admin\ListadosController::class, 'usuarios']
+    )->name('admin.usuarios.index');
+
+    // Dar de baja a los usuarios seleccionados
+    Route::post(
+        '/admin/usuarios/baja',
+        [\App\Http\Controllers\Admin\BajaUsuariosController::class, 'store']
+    )->name('admin.usuarios.baja');
+
+    // Lista de administradores registrados
+    Route::get(
+        '/admin/administradores',
+        [\App\Http\Controllers\Admin\ListadosController::class, 'administradores']
+    )->name('admin.administradores.index');
+
+    // Dar de baja a los administradores seleccionados
+    Route::post(
+        '/admin/administradores/baja',
+        [\App\Http\Controllers\Admin\BajaAdministradoresController::class, 'store']
+    )->name('admin.administradores.baja');
+
+
+    // Lista de todos los centros de acopio
+    Route::get(
+        '/admin/centros',
+        [\App\Http\Controllers\Admin\ListadosController::class, 'centros']
+    )->name('admin.centros.index');
+
+    // Dar de baja centros de acopio seleccionados
+    Route::post(
+        '/admin/centros/baja',
+        [\App\Http\Controllers\Admin\BajaCentrosController::class, 'store']
+    )->name('admin.centros.baja');
+
+    Route::post(
+        '/admin/administradores',
+        [\App\Http\Controllers\Admin\AdministradorController::class, 'store']
+    )->name('admin.administradores.store');
+
+});
 });

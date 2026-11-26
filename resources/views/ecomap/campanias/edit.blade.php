@@ -1,3 +1,4 @@
+
 @extends('ecomap.layout')
 
 @section('title', 'Editar campaña | EcoMap')
@@ -21,6 +22,7 @@
             @if($errors->any())
                 <div class="status">
                     <strong>Revisa los siguientes errores:</strong>
+
                     <ul>
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -29,16 +31,41 @@
                 </div>
             @endif
 
-            <form action="{{ route('campanias.update', $campania->id) }}"
-                  method="POST">
+            @if(session('success'))
+                <div class="status">
+                    {{ session('success') }}
+                </div>
+            @endif
 
+            @php
+                // Identificadores de materiales aceptados por el centro.
+                $idsMaterialesAceptados = $campania->centro
+                    ? $campania->centro->materiales
+                        ->filter(fn ($material) => (bool) $material->activo)
+                        ->pluck('id')
+                        ->map(fn ($id) => (int) $id)
+                        ->all()
+                    : [];
+
+                // Datos anteriores enviados cuando hubo errores.
+                $materialesAnteriores = old('materiales');
+            @endphp
+
+            <form
+                action="{{ route('campanias.update', $campania->id) }}"
+                method="POST"
+            >
                 @csrf
                 @method('PUT')
 
                 <div class="form-grid">
 
+                    {{-- Título --}}
                     <div class="form-group full">
-                        <label for="titulo">Título de la campaña *</label>
+                        <label for="titulo">
+                            Título de la campaña *
+                        </label>
+
                         <input
                             type="text"
                             id="titulo"
@@ -49,16 +76,25 @@
                         >
                     </div>
 
+                    {{-- Descripción --}}
                     <div class="form-group full">
-                        <label for="descripcion">Descripción</label>
+                        <label for="descripcion">
+                            Descripción
+                        </label>
+
                         <textarea
                             id="descripcion"
                             name="descripcion"
+                            rows="4"
                         >{{ old('descripcion', $campania->descripcion) }}</textarea>
                     </div>
 
+                    {{-- Fechas --}}
                     <div class="form-group">
-                        <label for="fecha_inicio">Fecha de inicio *</label>
+                        <label for="fecha_inicio">
+                            Fecha de inicio *
+                        </label>
+
                         <input
                             type="date"
                             id="fecha_inicio"
@@ -69,7 +105,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="fecha_fin">Fecha de finalización *</label>
+                        <label for="fecha_fin">
+                            Fecha de finalización *
+                        </label>
+
                         <input
                             type="date"
                             id="fecha_fin"
@@ -79,94 +118,144 @@
                         >
                     </div>
 
+                    {{-- Materiales --}}
                     <div class="form-group full">
+
                         <h3>Materiales solicitados</h3>
+
                         <p class="section-description">
-                            Marca los materiales que necesitas y escribe
-                            la cantidad solicitada.
+                            Selecciona los materiales que necesitas y modifica
+                            sus cantidades. Solo puedes agregar materiales
+                            aceptados por el centro.
                         </p>
-                    </div>
 
-                    @foreach($materiales as $material)
+                        <div class="campania-materiales-grid">
 
-                        @php
-                            $materialActual = $campania->materiales->firstWhere('id', $material->id);
+                            @foreach($materiales as $material)
 
-                            $materialesAnteriores = old('materiales');
+                                @php
+                                    $materialActual = $campania->materiales
+                                        ->firstWhere('id', $material->id);
 
-                            $seleccionado = is_array($materialesAnteriores)
-                                ? isset($materialesAnteriores[$loop->index]['id'])
-                                : $materialActual !== null;
+                                    $materialAnterior = is_array($materialesAnteriores)
+                                        ? ($materialesAnteriores[$loop->index] ?? null)
+                                        : null;
 
-                            $esInactivo = !$material->activo && $materialActual !== null;
+                                    $esInactivo = $materialActual !== null &&
+                                        !(bool) $material->activo;
 
-                            $cantidad = old(
-                                'materiales.'.$loop->index.'.cantidad',
-                                $materialActual?->pivot->cantidad_solicitada
-                            );
-                        @endphp
+                                    $esAceptado = in_array(
+                                        (int) $material->id,
+                                        $idsMaterialesAceptados,
+                                        true
+                                    );
 
-                        <div class="form-group">
+                                    $seleccionado = $esInactivo
+                                        ? true
+                                        : (
+                                            is_array($materialesAnteriores)
+                                                ? (
+                                                    isset($materialAnterior['id']) &&
+                                                    (int) $materialAnterior['id'] ===
+                                                    (int) $material->id
+                                                )
+                                                : (
+                                                    $materialActual !== null &&
+                                                    $esAceptado
+                                                )
+                                        );
 
-                            <label for="material_{{ $material->id }}">
-                                <input
-                                    type="checkbox"
-                                    id="material_{{ $material->id }}"
-                                    name="materiales[{{ $loop->index }}][id]"
-                                    value="{{ $material->id }}"
-                                    {{ $seleccionado ? 'checked' : '' }}
-                                    {{ $esInactivo ? 'disabled' : '' }}
-                                    onchange="
-                                        const cantidad = document.getElementById('cantidad_{{ $material->id }}');
-                                        cantidad.disabled = !this.checked;
-                                        cantidad.required = this.checked;
+                                    $cantidad = old(
+                                        'materiales.'.$loop->index.'.cantidad',
+                                        $materialActual?->pivot->cantidad_solicitada
+                                    );
+                                @endphp
 
-                                        if (!this.checked) {
-                                            cantidad.value = '';
-                                        }
-                                    "
+                                <div
+                                    class="campania-material-card"
+                                    data-material-id="{{ $material->id }}"
+                                    data-aceptado="{{ $esAceptado ? '1' : '0' }}"
+                                    data-inactivo="{{ $esInactivo ? '1' : '0' }}"
+                                    style="{{ ($esAceptado || $esInactivo) ? '' : 'display:none;' }}"
                                 >
 
-                                {{ $material->nombre }}
+                                    <label
+                                        class="campania-material-opcion"
+                                        for="material_{{ $material->id }}"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            id="material_{{ $material->id }}"
+                                            name="materiales[{{ $loop->index }}][id]"
+                                            value="{{ $material->id }}"
+                                            {{ $seleccionado ? 'checked' : '' }}
+                                            {{ $esInactivo || !$esAceptado ? 'disabled' : '' }}
+                                        >
 
-                                @if($esInactivo)
-                                    <span style="color: #b45309; font-weight: bold;">
-                                        (Inactivo, conservado en historial)
-                                    </span>
-                                @endif
-                            </label>
+                                        <span>
+                                            {{ $material->nombre }}
 
-                            <label for="cantidad_{{ $material->id }}">
-                                Cantidad solicitada ({{ $material->unidad_medida }})
-                            </label>
+                                            @if($esInactivo)
+                                                <span class="campania-material-inactivo">
+                                                    (Inactivo, conservado en historial)
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </label>
 
-                            <input
-                                type="number"
-                                id="cantidad_{{ $material->id }}"
-                                name="materiales[{{ $loop->index }}][cantidad]"
-                                value="{{ $cantidad }}"
-                                min="0.001"
-                                max="999999999.999"
-                                step="0.001"
-                                {{ $seleccionado && !$esInactivo ? 'required' : 'disabled' }}
-                            >
+                                    <label for="cantidad_{{ $material->id }}">
+                                        Cantidad solicitada
+                                        ({{ $material->unidad_medida }})
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="cantidad_{{ $material->id }}"
+                                        name="materiales[{{ $loop->index }}][cantidad]"
+                                        value="{{ $cantidad }}"
+                                        min="0.001"
+                                        max="999999999.999"
+                                        step="0.001"
+                                        {{ $esInactivo || !$seleccionado ? 'disabled' : 'required' }}
+                                    >
+
+                                </div>
+
+                            @endforeach
 
                         </div>
 
-                    @endforeach
+                        <p
+                            id="campania-sin-materiales"
+                            class="section-description"
+                            style="display:none;"
+                        >
+                            No hay materiales activos aceptados por este centro.
+                        </p>
+
+                        <p class="section-description">
+                            Los materiales inactivos que ya estaban asociados
+                            se conservarán en el historial de la campaña.
+                        </p>
+
+                    </div>
 
                 </div>
 
-                <br>
+                <div class="campania-acciones">
 
-                <button type="submit" class="btn-primary">
-                    Guardar cambios
-                </button>
+                    <button type="submit" class="btn-primary">
+                        Guardar cambios
+                    </button>
 
-                <a href="{{ route('campanias.show', $campania->id) }}"
-                   class="btn-secondary">
-                    Cancelar
-                </a>
+                    <a
+                        href="{{ route('campanias.show', $campania->id) }}"
+                        class="btn-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
 
             </form>
 
@@ -177,10 +266,89 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    const tarjetas = document.querySelectorAll(
+        '.campania-material-card'
+    );
+
+    const mensajeSinMateriales = document.getElementById(
+        'campania-sin-materiales'
+    );
+
     const fechaInicio = document.getElementById('fecha_inicio');
     const fechaFin = document.getElementById('fecha_fin');
 
+    // Mostrar los materiales aceptados y conservar los inactivos anteriores.
+    let materialesDisponibles = 0;
+
+    tarjetas.forEach(function (tarjeta) {
+
+        const aceptado = tarjeta.dataset.aceptado === '1';
+        const inactivo = tarjeta.dataset.inactivo === '1';
+
+        const checkbox = tarjeta.querySelector(
+            'input[type="checkbox"]'
+        );
+
+        const cantidad = tarjeta.querySelector(
+            'input[type="number"]'
+        );
+
+        const visible = aceptado || inactivo;
+
+        tarjeta.style.display = visible ? 'grid' : 'none';
+
+        if (inactivo) {
+
+            // Los materiales inactivos asociados se conservan,
+            // pero no pueden modificarse ni volver a seleccionarse.
+            checkbox.checked = true;
+            checkbox.disabled = true;
+
+            cantidad.disabled = true;
+            cantidad.required = false;
+
+        } else if (!aceptado) {
+
+            checkbox.checked = false;
+            cantidad.value = '';
+            cantidad.disabled = true;
+            cantidad.required = false;
+
+        } else {
+
+            materialesDisponibles++;
+
+            checkbox.disabled = false;
+            cantidad.disabled = !checkbox.checked;
+            cantidad.required = checkbox.checked;
+        }
+
+        if (aceptado) {
+            checkbox.addEventListener('change', function () {
+
+                cantidad.disabled = !this.checked;
+                cantidad.required = this.checked;
+
+                if (!this.checked) {
+                    cantidad.value = '';
+                }
+            });
+        }
+    });
+
+    if (mensajeSinMateriales) {
+        mensajeSinMateriales.style.display =
+            materialesDisponibles === 0 ? 'block' : 'none';
+    }
+
+    // La fecha final no puede ser anterior a la fecha inicial.
     function actualizarFechaMinima() {
+
+        if (!fechaInicio || !fechaFin) {
+            return;
+        }
+
         fechaFin.min = fechaInicio.value;
 
         if (
@@ -192,9 +360,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    fechaInicio.addEventListener('change', actualizarFechaMinima);
-
-    actualizarFechaMinima();
+    if (fechaInicio && fechaFin) {
+        fechaInicio.addEventListener('change', actualizarFechaMinima);
+        actualizarFechaMinima();
+    }
 });
 </script>
 

@@ -709,6 +709,277 @@ th, td {
         flex-direction: column;
         align-items: flex-start;
     }
+    /* =====================================
+   FORMULARIO DE PREINSCRIPCION
+===================================== */
+
+.solicitud-card {
+    max-width: 960px;
+    margin: 25px auto;
+    padding: 32px;
+}
+
+.solicitud-heading {
+    margin-bottom: 25px;
+}
+
+.solicitud-heading h2 {
+    color: var(--verde-oscuro);
+    margin-bottom: 8px;
+}
+
+.solicitud-heading p {
+    color: var(--gris);
+    line-height: 1.6;
+}
+
+.solicitud-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+.solicitud-form-grid .form-group {
+    min-width: 0;
+}
+
+.solicitud-form-grid .form-group.full {
+    grid-column: 1 / -1;
+}
+
+.solicitud-info-box {
+    align-self: stretch;
+    padding: 18px;
+    background: var(--verde-claro);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+}
+
+.solicitud-info-box strong {
+    color: var(--verde-oscuro);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.solicitud-info-box p {
+    color: var(--gris);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 7px;
+}
+
+.solicitud-materiales-section {
+    gap: 15px;
+}
+
+.solicitud-materiales-section h3 {
+    color: var(--verde-oscuro);
+    margin-bottom: 6px;
+}
+
+.solicitud-materiales-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.solicitud-material-card {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 18px;
+    background: #f8faf8;
+    border: 1px solid var(--borde);
+    border-radius: 11px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.solicitud-material-card:hover {
+    border-color: var(--verde);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
+}
+
+.solicitud-material-card .material-opcion {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.material-opcion input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--verde);
+    cursor: pointer;
+}
+
+.solicitud-material-card .material-cantidad-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.solicitud-material-card .cantidad-material {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid var(--borde);
+    border-radius: 7px;
+    background: white;
+}
+
+.solicitud-material-card .cantidad-material:disabled {
+    background: #eeeeee;
+    cursor: not-allowed;
+}
+
+.solicitud-material-card .cantidad-material:focus {
+    outline: none;
+    border-color: var(--verde);
+}
+
+.solicitud-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.solicitud-form-actions button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+
+    .solicitud-card {
+        padding: 20px;
+    }
+
+    .solicitud-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .solicitud-form-grid .form-group.full {
+        grid-column: auto;
+    }
+
+    .solicitud-materiales-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =====================================
+   CAMPAÑAS: TARJETAS DE MATERIALES
+===================================== */
+
+.campania-materiales-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 15px;
+}
+
+.campania-material-card {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-width: 0;
+    padding: 18px;
+    background: #f8faf8;
+    border: 1px solid var(--borde);
+    border-radius: 11px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.campania-material-card:hover {
+    border-color: var(--verde);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
+}
+
+.campania-material-opcion {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.campania-material-opcion input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--verde);
+    cursor: pointer;
+}
+
+.campania-material-card > label:not(.campania-material-opcion) {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.campania-material-card input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px;
+    background: white;
+    border: 1px solid var(--borde);
+    border-radius: 7px;
+}
+
+.campania-material-card input[type="number"]:focus {
+    outline: none;
+    border-color: var(--verde);
+}
+
+.campania-material-card input[type="number"]:disabled {
+    background: #eeeeee;
+    cursor: not-allowed;
+}
+
+.campania-material-inactivo {
+    display: block;
+    margin-top: 5px;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.campania-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.campania-acciones button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+
+    .campania-materiales-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .campania-acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .campania-acciones > * {
+        text-align: center;
+    }
 
 }
-/*Pepe Pollo
+}

@@ -1,6 +1,7 @@
+
 @extends('ecomap.layout')
 
-@section('title', 'EcoMap | Ciudadano')
+@section('title', 'EcoMap | Portal ciudadano')
 
 @section('content')
 
@@ -9,165 +10,152 @@
         <span class="tag">PORTAL CIUDADANO</span>
         <h1>Encuentra dónde reciclar</h1>
         <p>
-            Consulta centros de acopio y descubre qué materiales reciben.
+            Consulta centros de acopio disponibles y descubre
+            qué materiales reciben.
         </p>
     </div>
 </section>
-
 
 <section class="section">
     <div class="container">
+
         <h2>Centros de acopio</h2>
+
         <p class="section-description">
-            Busca un centro según su nombre o el material que recibe.
+            Busca por nombre, ubicación o material aceptado.
         </p>
 
-
-        <div class="search-box">
+        {{-- Buscador de centros --}}
+        <form
+            action="{{ route('ciudadano') }}"
+            method="GET"
+            class="search-box"
+        >
             <input
                 type="text"
-                placeholder="Buscar centro de acopio..."
+                name="buscar"
+                placeholder="Nombre, municipio o ubicación..."
+                value="{{ $buscar }}"
+                maxlength="120"
             >
-            <select>
+
+            <select name="material">
                 <option value="">Todos los materiales</option>
-                <option>Papel y cartón</option>
-                <option>Plástico</option>
-                <option>Vidrio</option>
-                <option>Metales</option>
-                <option>Baterías</option>
-                <option>Electrónicos</option>
+
+                @foreach($materiales as $material)
+                    <option
+                        value="{{ $material->id }}"
+                        {{ (string) $materialId === (string) $material->id ? 'selected' : '' }}
+                    >
+                        {{ $material->nombre }}
+                    </option>
+                @endforeach
             </select>
-            <button class="btn-primary" type="button">
+
+            <button type="submit" class="btn-primary">
                 Buscar
             </button>
-        </div>
 
+            @if($buscar !== '' || $materialId)
+                <a
+                    href="{{ route('ciudadano') }}"
+                    class="btn-secondary"
+                >
+                    Limpiar búsqueda
+                </a>
+            @endif
+        </form>
 
+        {{-- Resultados --}}
         <div class="center-grid">
-            <article class="center-card">
-                <div class="center-icon">♻</div>
-                <span class="status">Activo</span>
-                <h3>Centro de Reciclaje Colima</h3>
-                <p>
-                    <strong>Dirección:</strong>
-                    Colima, Colima.
-                </p>
-                <p>
-                    <strong>Horario:</strong>
-                    Lunes a viernes, 8:00 a 16:00.
-                </p>
-                <div class="center-tags">
-                    <span>Plástico</span>
-                    <span>Cartón</span>
-                    <span>Vidrio</span>
-                </div>
-                <button class="btn-secondary" type="button">
-                    Ver información
-                </button>
-            </article>
 
-            <article class="center-card">
-                <div class="center-icon">♻</div>
-                <span class="status">Activo</span>
-                <h3>Centro de Acopio Villa de Álvarez</h3>
-                <p>
-                    <strong>Dirección:</strong>
-                    Villa de Álvarez, Colima.
-                </p>
-                <p>
-                    <strong>Horario:</strong>
-                    Lunes a sábado, 9:00 a 15:00.
-                </p>
-                <div class="center-tags">
-                    <span>Metales</span>
-                    <span>Plástico</span>
-                    <span>Cartón</span>
-                </div>
-                <button class="btn-secondary" type="button">
-                    Ver información
-                </button>
-            </article>
+            @forelse($centros as $centro)
 
-            <article class="center-card">
-                <div class="center-icon">♻</div>
-                <span class="status">Activo</span>
-                <h3>Centro de Recuperación Ambiental</h3>
-                <p>
-                    <strong>Dirección:</strong>
-                    Comala, Colima.
-                </p>
-                <p>
-                    <strong>Horario:</strong>
-                    Lunes a viernes, 9:00 a 17:00.
-                </p>
-                <div class="center-tags">
-                    <span>Papel</span>
-                    <span>Vidrio</span>
-                    <span>Electrónicos</span>
+                <article class="center-card">
+
+                    <div class="center-icon">♻</div>
+
+                    <span class="status">Activo</span>
+
+                    <h3>{{ $centro->nombre }}</h3>
+
+                    <p>
+                        <strong>Dirección:</strong>
+                        {{ $centro->direccion }}
+                    </p>
+
+                    <p>
+                        <strong>Municipio:</strong>
+                        {{ $centro->municipio }},
+                        {{ $centro->estado }}
+                    </p>
+
+                    <p>
+                        <strong>Horario:</strong>
+                        {{ $centro->horario ?? 'No especificado' }}
+                    </p>
+
+                    <div class="center-tags">
+                        @forelse($centro->materiales as $material)
+                            <span>{{ $material->nombre }}</span>
+                        @empty
+                            <span>Sin materiales registrados</span>
+                        @endforelse
+                    </div>
+
+                    <a
+                        href="{{ route('centros.publicos.show', $centro->id) }}"
+                        class="btn-secondary"
+                    >
+                        Ver información
+                    </a>
+
+                </article>
+
+            @empty
+
+                <div class="form-card">
+                    <h3>No encontramos centros de acopio</h3>
+
+                    <p>
+                        No hay centros que coincidan con tu búsqueda
+                        o todavía no existen centros validados y activos.
+                    </p>
+
+                    <a
+                        href="{{ route('ciudadano') }}"
+                        class="btn-secondary"
+                    >
+                        Ver todos los centros
+                    </a>
                 </div>
-                <button class="btn-secondary" type="button">
-                    Ver información
-                </button>
-            </article>
+
+            @endforelse
+
         </div>
+
     </div>
 </section>
 
-
+{{-- Preinscripción --}}
 <section class="section section-green">
     <div class="container">
-        <h2>Preinscribir una entrega</h2>
-        <p class="section-description">
-            Indica qué materiales planeas llevar al centro de acopio.
-        </p>
-        <div class="form-card">
 
-            <form>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Centro de acopio</label>
-                        <select required>
-                            <option value="">Selecciona un centro</option>
-                            <option>Centro de Reciclaje Colima</option>
-                            <option>Centro de Acopio Villa de Álvarez</option>
-                            <option>Centro de Recuperación Ambiental</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Material</label>
-                        <select required>
-                            <option value="">Selecciona un material</option>
-                            <option>Papel y cartón</option>
-                            <option>Plástico</option>
-                            <option>Vidrio</option>
-                            <option>Metales</option>
-                            <option>Baterías</option>
-                            <option>Electrónicos</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad estimada (kg)</label>
-                        <input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            placeholder="Ej. 5.50"
-                            required
-                        >
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha estimada</label>
-                        <input type="date" required>
-                    </div>
-                </div>
-                <br>
-                <button type="button" class="btn-primary">
-                    Registrar preinscripción
-                </button>
-            </form>
-        </div>
+        <h2>¿Planeas llevar materiales a reciclar?</h2>
+
+        <p class="section-description">
+            Registra una preinscripción para informar al centro
+            qué materiales planeas entregar y en qué fecha.
+        </p>
+
+        <a
+            href="{{ route('solicitudes.create') }}"
+            class="btn-primary"
+        >
+            Registrar preinscripción
+        </a>
+
     </div>
 </section>
 
 @endsection
-/*Pepe Pollo
